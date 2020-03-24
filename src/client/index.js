@@ -1,4 +1,4 @@
-import 'bootstrap';
+// import '~bootstrap';
 import './style.scss';
 import game from './utils/game';
 

@@ -1,11 +1,12 @@
 import {Engine} from "babylonjs";
 import {MainScene} from "../scenes/mainScene";
+import {monopoly} from "../games/monopoly/game";
 
 class Game {
     init(canvas) {
         this.engine = new Engine(canvas, true, { stencil: true });
 
-        this.scene = new MainScene(this.engine);
+        this.scene = new MainScene(monopoly, this.engine);
         this.scene.init();
 
         this.engine.runRenderLoop(() => {
@@ -15,6 +16,10 @@ class Game {
         window.addEventListener('resize', () => {
             this.engine.resize();
         });
+
+        const urlParams = new URLSearchParams(window.location.search);
+        this.gameId = urlParams.get('id') || 'room1';
+        this.login = urlParams.get('login') || 'user';
     }
 
     getEngine() {
@@ -27,6 +32,14 @@ class Game {
 
     getScene() {
         return this.scene;
+    }
+
+    getGameId() {
+        return this.gameId;
+    }
+
+    getLogin() {
+        return this.login;
     }
 }
 

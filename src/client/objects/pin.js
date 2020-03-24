@@ -1,29 +1,29 @@
 import {
+    ActionManager,
+    Color3,
+    ExecuteCodeAction,
+    HighlightLayer,
     MeshBuilder,
     PhysicsImpostor,
     PointerEventTypes,
     StandardMaterial,
-    Texture,
-    Vector3,
-    ExecuteCodeAction,
-    ActionManager,
-    HighlightLayer,
-    Color3
+    Vector3
 } from "babylonjs";
 import {getGroundPosition} from "../utils/dragAndDrop";
 import game from "../utils/game";
 
-export class Card {
-    constructor(scene, name, image) {
+export class Pin {
+    constructor(scene, name, color) {
         this.scene = scene;
-        this.card = MeshBuilder.CreateBox(name, {width: 4.5, height: 0.1, depth: 3.6}, this.scene.getScene());
-        this.material = new StandardMaterial(`material-card–${name}`, this.scene.getScene());
-        this.material.ambientTexture = new Texture(image, this.scene.getScene());
-        this.card.material = this.material;
-        this.card.rotation = new Vector3(0, Math.PI / -2, 0);
-        this.card.position = new Vector3(0, 1.2, 0);
+        this.isDirty = false;
+        this.self = MeshBuilder.CreateBox(name, {width: 2, height: 2, depth: 2}, this.scene.getScene());
+        this.material = new StandardMaterial(`material-pin–${name}`, this.scene.getScene());
+        this.material.ambientColor = Color3.FromHexString(color);
+        this.self.material = this.material;
+        this.self.rotation = new Vector3(0, Math.PI / -2, 0);
+        this.self.position = new Vector3(0, 3, 0);
 
-        this.card.physicsImpostor = new PhysicsImpostor(this.card, PhysicsImpostor.BoxImpostor, {
+        this.self.physicsImpostor = new PhysicsImpostor(this.self, PhysicsImpostor.BoxImpostor, {
             mass: 10,
             friction: 10,
             restitution: 0
@@ -32,8 +32,11 @@ export class Card {
 
     onPointerDown(pickInfo) {
         if (pickInfo.hit) {
-            this.card.physicsImpostor.sleep();
-            this.card.position.y = 2;
+            this.isDirty = true;
+            this.self.physicsImpostor.sleep();
+            this.self.position.y = 2;
+            this.self.rotationQuaternion.x = 0;
+            this.self.rotationQuaternion.z = 0;
             this.startingPoint = getGroundPosition(this.scene.getScene());
 
             if (this.startingPoint) {
@@ -50,7 +53,8 @@ export class Card {
             this.startingPoint = null;
         }
 
-        this.card.physicsImpostor.wakeUp();
+        this.isDirty = false;
+        this.self.physicsImpostor.wakeUp();
     }
 
     onPointerMove() {
@@ -65,7 +69,7 @@ export class Card {
         }
 
         const diff = current.subtract(this.startingPoint);
-        this.card.position.addInPlace(diff);
+        this.self.position.addInPlace(diff);
 
         this.startingPoint = current;
     };
@@ -73,7 +77,7 @@ export class Card {
 
     setDraggable() {
         const scene = this.scene.getScene();
-        const card = this.card;
+        const card = this.self;
 
         const hl = new HighlightLayer(`hl-${card.name}`, scene);
         hl.isEnabled = false;
@@ -100,12 +104,10 @@ export class Card {
             switch (pointerInfo.type) {
                 case PointerEventTypes.POINTERDOWN:
                     if (pointerInfo.pickInfo.pickedMesh === card) {
-                        console.log('POINTERDOWN', pointerInfo);
                         this.onPointerDown(pointerInfo.pickInfo);
                     }
                     break;
                 case PointerEventTypes.POINTERUP:
-                    console.log('POINTERUP', pointerInfo);
                     this.onPointerUp();
                     break;
                 case PointerEventTypes.POINTERMOVE:
@@ -113,5 +115,14 @@ export class Card {
                     break;
             }
         });
+    }
+
+    updatePosition(position, rotation) {
+        this.self.position = position;
+        // this.self.rotation = rotation;
+    }
+
+    getMesh() {
+        return this.self;
     }
 }
